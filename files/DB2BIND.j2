@@ -1,0 +1,61 @@
+//DB2BIND JOB 241901,'BIND PROGRAMS',NOTIFY=&SYSUID,CLASS=A,MSGCLASS=H
+//*
+//****************************************************************************
+//* Copyright 2021 IBM Corp. All Rights Reserved.
+//*
+//*  Licensed under the Apache License, Version 2.0 (the "License");
+//*  you may not use this file except in compliance with the License.
+//*  You may obtain a copy of the License at
+//*
+//*       http://www.apache.org/licenses/LICENSE-2.0
+//*
+//*   Unless required by applicable law or agreed to in writing, software
+//*   distributed under the License is distributed on an "AS IS" BASIS,
+//*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//*   See the License for the specific language governing permissions and
+//*   limitations under the License.
+//****************************************************************************
+//*
+//BIND    EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD  DSN=DSNC10.SDSNLOAD,DISP=SHR
+//DBRMLIB  DD  DSN={{ dbrm_tgt }},DISP=SHR
+//SYSPRINT DD  SYSOUT=*
+//SYSTSPRT DD  SYSOUT=*
+//SYSUDUMP DD  SYSOUT=*
+//SYSIN  DD *
+/*
+//SYSTSIN DD *
+DSN SYSTEM(DBCG)
+{% for dbrm in dbrms %}
+BIND PACKAGE ({{ db2_package }})                          -
+     ISO(CS)                                              -
+     CURRENTDATA(NO)                                      -
+     MEMBER({{ dbrm }})                                   -
+     DEGREE(1)                                            -
+     DYNAMICRULES(BIND)                                   -
+     ACTION (REPLACE)                                     -
+     EXPLAIN(NO)                                          -
+     OWNER(ADCDMST)                                       -
+     QUALIFIER(GENAPP1)                                   -
+     ENABLE(BATCH,CICS)                                   -
+     REL(DEALLOCATE)                                      -
+     VALIDATE(BIND)
+{% endfor %}
+
+BIND PLAN (GENAONE)                                       -
+     PKLIST(NULLID.*, *.{{ db2_package }}.*)              -
+     CURRENTDATA(NO)                                      -
+     ISO(CS)                                              -
+     ACTION (REP)                                         -
+     OWNER(ADCDMST)                                       -
+     QUALIFIER(GENAPP1)                                   -
+     REL(DEALLOCATE)                                      -
+     ACQUIRE(USE)                                         -
+     RETAIN                                               -
+     NOREOPT(VARS)                                        -
+     VALIDATE(BIND)
+
+RUN PROGRAM(DSNTIAD) PLAN({{ db2_plan }}) -
+    LIB('DSNC10.{{ db2_subsys }}.RUNLIB.LOAD')
+END
+/*

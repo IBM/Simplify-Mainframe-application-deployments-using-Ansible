@@ -1,0 +1,41 @@
+##############################################################################
+# Copyright 2021 IBM Corp. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+##############################################################################
+# Is the application Batch, DB2, CICS or both.  Set true or false as per your application.
+cics: true
+db2: true
+
+# Type of program - CICS/CICS-DB2/COBOL/COBOL-DB2.  Set as per your application.  
+type: CICS-DB2
+
+# Load modules - Source, Target and backup PDS and modified modules
+load_src: <Load Module source PDS>
+load_tgt: <Load Module target PDS>
+load_bkp: <Load Module backup PDS>
+load_mems: <List of modified Load modules to deploy, For example - ['LOAD01','LOAD02','LOAD03']>
+
+# DBRMs -  Source, Target and backup PDS and modified DBrMs
+dbrm_src: <DBRM source PDS>
+dbrm_tgt: <DBRM target PDS>
+dbrm_bkp: <DBRM backup PDS>
+dbrms: <List of modifies DBRMs to BIND, For example - ['DBRM01','DBRM02','DBRM03']>
+
+# DB2 parameters if DB2 is set to true
+db2_subsys: <DB2 Subsystem name>
+db2_package: <DB2 Package name>
+db2_plan: <DB2 Plan name>
+
+# CICS programs if CICS is set to true
+cics_pgms: <List of modified CICS programs to deploy, For example - ['LOAD01','LOAD02','LOAD03']>
