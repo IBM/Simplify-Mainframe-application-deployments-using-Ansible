@@ -13,6 +13,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 ##############################################################################
+##############################################################################
+# Remove ibm.ibm_zos_cics from collections if zos_operator is used for CICS
+# programs New Copy
+##############################################################################
 ---
 - name: Deploy Z {{ type }} Application
   hosts: all
@@ -21,6 +25,7 @@
  
   collections:
     - ibm.ibm_zos_core
+    - ibm.ibm_zos_cics
   
   vars_files: "./group_vars/deploy_vars.yml"
 

@@ -4,7 +4,7 @@
 
 Ansible is a simple yet powerful automation tool, which makes it a very popular open-source automation tool. Using Ansible on z/OS, you can extend all the capabilities of Ansible to z/OS platform including platform agnostic integrated DevOps.
 
-This code pattern presents how to use Ansible on z/OS to complete common actions needed to deploy a COBOL application in CICS.
+This code pattern shows you how to use Ansible on z/OS to complete common actions needed to do a simple deploy of a sample CICS-COBOL application. 
 
 ## Description
 
@@ -30,6 +30,7 @@ We will perform these actions on z/OS using Ansible below.
 
 - [Ansible](https://www.ansible.com/) 2.9 or later
 - [z/OS Core Collection for Ansible](https://galaxy.ansible.com/ibm/ibm_zos_core)
+- [z/OS CICS Collection for Ansible](https://galaxy.ansible.com/ibm/ibm_zos_cics)
 - [IBM Open Edition Python, z/OS OpenSSH, and IBM Z Open Automation Utilities](https://ibm.github.io/z_ansible_collections_doc/ibm_zos_core/docs/source/requirements_managed.html) in managed node (z/OS)
 - Any Git based repositories like [GitHub](https://github.com/), [GitLab](https://about.gitlab.com/), [Bitbucket](https://bitbucket.org/) etc.
 - [Jenkins](https://www.jenkins.io/doc/book/getting-started/) orchestrator
@@ -78,6 +79,7 @@ cics_pgms: #<List of modified CICS programs to deploy, Ex:['LOAD01','LOAD02','LO
 
   collections:
     - ibm.ibm_zos_core
+    - ibm.ibm_zos_cics
   
   vars_files: "./group_vars/deploy_vars.yml"
 
@@ -213,18 +215,45 @@ END
 
 8. Create an Ansible task named [./tasks/db2_bind.yml](./tasks/db2_bind.yml) to generate Db2 BIND JCL, copy the JCL to a z/OS USS path, and execute using the Ansible playbook. This is very similar to what is mentioned in Step 5 for load modules backup.
 
-9. Do the CICS refresh (new copy) from an Ansible playbook by executing ```CEMT``` transaction in the target CICS region. To achieve this using Ansible, use the ```zos_operator module``` to issue ```CEMT``` as a console command in the playbook task.  See [./tasks/cics_refresh.yml](./tasks/cics_refresh.yml). The variable ```cics_pgms``` can resolve from the variables file located at [./group_vars/deploy_vars.yml](./group_vars/deploy_vars.yml). Do the CICS new copy for all the programs listed in ```cics_pgms```. Following is an excerpt of the CICS refresh task.
-```YAML
-- name: New Copy CICS Program
-  zos_operator:
-    cmd: 'F CICSTS55,CEMT S PROG({{ item }}) NEW'
-  loop: "{{ cics_pgms }}"
-  register: result
+9. Do the CICS refresh (new copy) from an Ansible playbook by executing ```CEMT``` transaction in the target CICS region. 
 
-- name: Response for New Copy
-  debug:
-    msg: "{{ result }}"
-```
+   * **Option 1** \
+     To achieve this using Ansible, use the ```zos_operator``` module to issue ```CEMT``` as a console command in the playbook task.  See [./tasks/cics_refresh.yml](./tasks/cics_refresh.yml). The variable ```cics_pgms``` can resolve from the variables file located at [./group_vars/deploy_vars.yml](./group_vars/deploy_vars.yml). Do the CICS new copy for all the programs listed in ```cics_pgms```. Following is an excerpt of the CICS refresh task.
+     ```YAML
+     - name: New Copy CICS Program
+       zos_operator:
+         cmd: 'F CICSTS55,CEMT S PROG({{ item }}) NEW'
+       loop: "{{ cics_pgms }}"
+       register: result
+
+     - name: Response for New Copy
+       debug:
+         msg: "{{ result }}"
+     ```
+
+   * **Option 2** \
+     If CICS management client interface (CMCI) setup in the environment ```ibm_zos_cics``` module can be used to do the CICS New Copy of the programs instead of ```zos_operator``` module. See [./tasks/cics_refresh.yml](./tasks/cics_refresh.yml), comment the code below ```Option 1: New Copy CICS programs using MVS operator command``` and uncomment the code below ```Option 2: New Copy CICS programs using z/OS CICS collection```. Set the variables ```context```, ```scope```, ```cmci_host```, ```cmci_port``` and ```scheme``` in [./group_vars/all.yml](./group_vars/all.yml) based on the CMCI setup. The variable ```cics_pgms``` can resolve from the variables file located at [./group_vars/deploy_vars.yml](./group_vars/deploy_vars.yml). Do the CICS new copy for all the programs listed in ```cics_pgms```. Following is an excerpt of the CICS refresh task using ```ibm_zos_cics```.
+     ```YAML
+     - name: New Copy CICS Program
+       delegate_to: localhost
+       cmci_action:
+         context: '{{ context }}'
+         scope: '{{ scope }}'
+         cmci_host: '{{ cmci_host }}'
+         cmci_port: '{{ cmci_port | int }}'
+         scheme: '{{ scheme }}'
+         action_name: NEWCOPY
+         type: CICSProgram
+         resources:
+           filter:
+             program: '{{ item }}'
+       loop: "{{ cics_pgms }}"
+       register: result
+
+     - name: Response for New Copy
+       debug:
+         msg: "{{ result }}"
+     ```
 
 10. Perform rollback to reverse the changes in target libraries if required. Create an Ansible task - [./rollback_app.yml](./rollback_app.yml) to copy back the previous version of the load modules and DBRMs from the backup libraries to the target environment libraries. Bind the DBRM's to the Db2 plan and do CICS refresh (new copy) to the CICS load modules based on the parameters ```db2``` and ```cics``` defined in variables file - “[./group_vars/deploy_vars.yml](./group_vars/deploy_vars.yml)”. 
 
@@ -240,7 +269,7 @@ Do the following configurations in Jenkins to integrate with Ansible:
 
 ![02_Ansible_Config.PNG](./Images/02_Ansible_Config.PNG)
 
-2. Install the Ansible z/OS Core Collection under Jenkins user by creating a Jenkins job and by executing the installation command from ```Execute shell``` drop down option under ```Add build step``` as shown in the below figure. Multiple shell commands can be executed as needed.  This is a one-time activity.
+2. Install the Ansible z/OS Core and z/OS CICS collections under Jenkins user by creating a Jenkins job and by executing the installation command from ```Execute shell``` drop down option under ```Add build step``` as shown in the below figure. Multiple shell commands can be executed as needed.  This is a one-time activity.
 
 ![03_Install_zos_core_in_Jenkins.PNG](./Images/03_Install_zos_core_in_Jenkins.PNG)
 
@@ -263,7 +292,11 @@ For the complete sample playbooks, tasks, templates and files discussed above, p
 
 ## Next Steps
 
-Watch out this space for new Ansible collections for z/OS - [Ansible Galaxy](https://galaxy.ansible.com/search?deprecated=false&keywords=zos&order_by=-relevance&page=1). 
+- Automated generation of [./group_vars/deploy_vars.yml](./group_vars/deploy_vars.yml) from the build process to deploy only the modified components
+- Streamline the backup process. It must be named and tracked and stored to allow for rollback at any time in the future. Backup process can be implemented by integrating with SCMs or Binary repositories used. Implement a full tracking mechanism for all deployments to understand what is deployed into which environments. 
+- Streamline the rollback process by integrating with SCMs or Binary repositories used.
+- The Ansible tasks mentioned in here can be achieved in multiple ways using Ansible and integrating with different tools and technologies.  Explore more on Ansible.
+- Watch out this space for new Ansible collections for z/OS - [Ansible Galaxy](https://galaxy.ansible.com/search?deprecated=false&keywords=zos&order_by=-relevance&page=1). 
 
 ## License
 

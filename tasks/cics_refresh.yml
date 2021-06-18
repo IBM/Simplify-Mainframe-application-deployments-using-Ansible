@@ -13,11 +13,38 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 ##############################################################################
-- name: New Copy CICS Program
+############################################################################
+# Option 1: New Copy CICS programs using MVS operator command  
+# Comment the following piece of code if using z/OS CICS collection for 
+# New copy
+############################################################################  
+- name: New Copy CICS Program using zos_operator
   zos_operator:
     cmd: 'F CICSTS55,CEMT S PROG({{ item }}) NEW'
   loop: "{{ cics_pgms }}"
   register: result
+  
+############################################################################
+# Option 2: New Copy CICS programs using z/OS CICS collection  
+# Uncomment the following piece of code if using z/OS CICS collection for 
+# New copy. CMCI should be enabled for this. The CMCI variables should be
+# set in ./group_vars/all.yml
+############################################################################  
+#- name: New Copy CICS Program using zos_cics
+#  delegate_to: localhost
+#  cmci_action:
+#    context: '{{ context }}'
+#    scope: '{{ scope }}'
+#    cmci_host: '{{ cmci_host }}'
+#    cmci_port: '{{ cmci_port | int }}'
+#    scheme: '{{ scheme }}'
+#    action_name: NEWCOPY
+#    type: CICSProgram
+#    resources:
+#      filter:
+#        program: '{{ item }}'
+#  loop: "{{ cics_pgms }}"
+#  register: result  
 
 - name: Response for New Copy
   debug:

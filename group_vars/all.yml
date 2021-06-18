@@ -34,3 +34,29 @@ environment_vars:
   _TAG_REDIR_IN: "txt"
   _TAG_REDIR_OUT: "txt"
   LANG: "C"
+################################################################################
+# CMCI variables required if IBM z/OS CICS Ansible collection is used
+# Remove the following variables in IBM z/OS CICS Ansible collection is not used.
+################################################################################
+# Target CMCI hostname
+cmci_host: <CMCI Host Name>
+
+# Target CMCI port
+cmci_port: <CMCI Host Port>
+
+# CMCI scheme (http or https)
+scheme: https
+
+# Target CICSplex SM context 
+# If CMCI is installed in a CICSPlex SM environment, context is the name of the CICSplex or CMAS associated with the request
+# If CMCI is installed in a single region (SMSS), context is the APPLID of the CICS region associate with the request.
+context: <CICSPlex Name>
+
+# Target CICSplex SM scope (probably the target region name)
+scope: <CICS Region Name>
+
+# CMCI user name (leave blank for unauthenticated)
+cmci_user: 
+
+# CMCI password (leave blank for unauthenticated)
+cmci_password: 

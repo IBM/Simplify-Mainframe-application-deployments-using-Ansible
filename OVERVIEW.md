@@ -4,7 +4,7 @@
 
 Ansible is a simple yet powerful automation tool, which makes it a very popular open-source automation tool. Using Ansible on z/OS, you can extend all the goodies of Ansible to z/OS platform including platform agnostic integrated DevOps.
 
-This code pattern presents how to use Ansible on z/OS to complete common actions needed to deploy a COBOL application in CICS.
+This code pattern shows you how to use Ansible on z/OS to complete common actions needed to do a simple deploy of a sample CICS-COBOL application. 
 
 ## Description
 
